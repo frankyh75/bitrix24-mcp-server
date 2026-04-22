@@ -1,8 +1,8 @@
 {
-  "name": "bitrix24-mcp-server",
+  "name": "bitrix24-task-mcp-server",
   "version": "1.0.0",
   "type": "module",
-  "description": "Bitrix24 MCP Server for AI Agent Integration",
+  "description": "Task-first Bitrix24 MCP server fork for local project and task management",
   "main": "server.js",
   "bin": {
     "bitrix24-mcp": "./build/index.js"

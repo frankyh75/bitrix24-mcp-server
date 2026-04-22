@@ -1,5 +1,5 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { bitrix24Client, BitrixContact, BitrixDeal, BitrixTask, BitrixLead, BitrixCompany } from '../bitrix24/client.js';
+import { bitrix24Client, BitrixContact, BitrixDeal, BitrixTask, BitrixLead, BitrixCompany, BitrixProject } from '../bitrix24/client.js';
 
 // Contact Management Tools
 export const createContactTool: Tool = {
@@ -168,6 +168,109 @@ export const getDealsFromDateRangeTool: Tool = {
       limit: { type: 'number', description: 'Maximum number of deals to return', default: 50 }
     },
     required: ['startDate']
+  }
+};
+
+// Task Management Tools
+export const createTaskTool: Tool = {
+  name: 'bitrix24_create_task',
+  description: 'Create a new task in Bitrix24. Use GROUP_ID (integer) to assign task to a project.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      title: { type: 'string', description: 'Task title' },
+      description: { type: 'string', description: 'Task description' },
+      responsibleId: { type: 'number', description: 'User ID responsible for the task' },
+      deadline: { type: 'string', description: 'Due date (ISO 8601 format, e.g., 2024-12-31)' },
+      priority: { type: 'string', description: 'Priority: 0=Low, 1=Normal, 2=High', default: '1' },
+      status: { type: 'string', description: 'Status: 1=New, 2=Pending, 3=In Progress, 4=Completed, 5=Deferred', default: '1' },
+      groupId: { type: 'number', description: 'Project/Group ID to assign task to (integer, e.g., 2 for DMC-MCP)' },
+      accomplices: { type: 'array', items: { type: 'number' }, description: 'Additional responsible user IDs' },
+      auditors: { type: 'array', items: { type: 'number' }, description: 'User IDs that can view the task' }
+    },
+    required: ['title']
+  }
+};
+
+export const getTaskTool: Tool = {
+  name: 'bitrix24_get_task',
+  description: 'Retrieve a task by ID',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'Task ID' }
+    },
+    required: ['id']
+  }
+};
+
+export const listTasksTool: Tool = {
+  name: 'bitrix24_list_tasks',
+  description: 'List tasks with optional filtering. Supports filter by GROUP_ID (project ID).',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      filter: { type: 'object', description: 'Filter criteria (e.g., {"GROUP_ID": 2, "STATUS": "1"})' },
+      order: { type: 'object', description: 'Sort order (e.g., {"CREATED_DATE": "DESC"})' },
+      limit: { type: 'number', description: 'Maximum tasks to return', default: 50 }
+    }
+  }
+};
+
+export const updateTaskTool: Tool = {
+  name: 'bitrix24_update_task',
+  description: 'Update an existing task. Use GROUP_ID (integer) to move task to a different project.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      id: { type: 'string', description: 'Task ID' },
+      title: { type: 'string', description: 'Task title' },
+      description: { type: 'string', description: 'Task description' },
+      responsibleId: { type: 'number', description: 'User ID responsible for the task' },
+      deadline: { type: 'string', description: 'Due date (ISO 8601 format)' },
+      priority: { type: 'string', description: 'Priority: 0=Low, 1=Normal, 2=High' },
+      status: { type: 'string', description: 'Status: 1=New, 2=Pending, 3=In Progress, 4=Completed, 5=Deferred' },
+      groupId: { type: 'number', description: 'Project/Group ID (integer)' }
+    },
+    required: ['id']
+  }
+};
+
+// Project/Group Management Tools (sonet_group)
+export const createProjectTool: Tool = {
+  name: 'bitrix24_create_project',
+  description: 'Create a new project/group in Bitrix24',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      name: { type: 'string', description: 'Project name' },
+      description: { type: 'string', description: 'Project description' },
+      active: { type: 'string', description: 'Active: Y or N', default: 'Y' },
+      visible: { type: 'string', description: 'Visible: Y or N', default: 'Y' },
+      opened: { type: 'string', description: 'Opened: Y or N', default: 'Y' }
+    },
+    required: ['name']
+  }
+};
+
+export const listProjectsTool: Tool = {
+  name: 'bitrix24_list_projects',
+  description: 'List all projects/groups in Bitrix24',
+  inputSchema: {
+    type: 'object',
+    properties: {}
+  }
+};
+
+export const getProjectTool: Tool = {
+  name: 'bitrix24_get_project',
+  description: 'Get a specific project/group by ID',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      id: { type: 'number', description: 'Project/Group ID' }
+    },
+    required: ['id']
   }
 };
 
@@ -913,7 +1016,27 @@ export const getCompaniesWithUserNamesTool: Tool = {
 };
 
 // Export all tools
-export const allTools = [
+const taskFocusedTools = [
+  // Task Management Tools
+  createTaskTool,
+  getTaskTool,
+  listTasksTool,
+  updateTaskTool,
+  // Project/Group Management Tools
+  createProjectTool,
+  listProjectsTool,
+  getProjectTool,
+  // User helpers useful for task assignment
+  getUserTool,
+  getAllUsersTool,
+  resolveUserNamesTool,
+  // Connection / permission checks
+  validateWebhookTool,
+  diagnosePermissionsTool,
+  checkCRMSettingsTool
+];
+
+const fullTools = [
   createContactTool,
   getContactTool,
   listContactsTool,
@@ -925,6 +1048,7 @@ export const allTools = [
   getLatestDealsTool,
   getDealsFromDateRangeTool,
   updateDealTool,
+  ...taskFocusedTools,
   createLeadTool,
   getLeadTool,
   listLeadsTool,
@@ -938,9 +1062,6 @@ export const allTools = [
   getLatestCompaniesTool,
   getCompaniesFromDateRangeTool,
   searchCRMTool,
-  validateWebhookTool,
-  diagnosePermissionsTool,
-  checkCRMSettingsTool,
   testLeadsAPITool,
   // Phase 1: Enhanced Deal Filtering Tools
   getDealPipelinesTool,
@@ -960,14 +1081,14 @@ export const allTools = [
   analyzeCustomerEngagementTool,
   forecastPerformanceTool,
   // User Management Tools
-  getUserTool,
-  getAllUsersTool,
-  resolveUserNamesTool,
   getContactsWithUserNamesTool,
   getDealsWithUserNamesTool,
   getLeadsWithUserNamesTool,
   getCompaniesWithUserNamesTool
 ];
+
+const mode = (process.env.BITRIX24_MODE || 'tasks').toLowerCase();
+export const allTools = mode === 'full' ? fullTools : taskFocusedTools;
 
 // Tool execution handlers
 export async function executeToolCall(name: string, args: any): Promise<any> {
@@ -1189,6 +1310,59 @@ export async function executeToolCall(name: string, args: any): Promise<any> {
           args.limit || 50
         );
         return { success: true, companies: dateRangeCompanies };
+
+      // Task Management Tools
+      case 'bitrix24_create_task':
+        const task: BitrixTask = {
+          TITLE: args.title,
+          DESCRIPTION: args.description,
+          RESPONSIBLE_ID: args.responsibleId?.toString(),
+          DEADLINE: args.deadline,
+          PRIORITY: args.priority as any,
+          STATUS: args.status,
+          GROUP_ID: args.groupId,
+          ACCOMPLICES: args.accomplices,
+          AUDITORS: args.auditors
+        };
+        const taskId = await bitrix24Client.createTask(task);
+        return { success: true, taskId, message: `Task created with ID: ${taskId}` };
+
+      case 'bitrix24_get_task':
+        const taskData = await bitrix24Client.getTask(args.id);
+        return { success: true, task: taskData };
+
+      case 'bitrix24_list_tasks':
+        const tasks = await bitrix24Client.listTasks({
+          filter: args.filter,
+          order: args.order
+        });
+        return { success: true, tasks: tasks.slice(0, args.limit || 50) };
+
+      case 'bitrix24_update_task':
+        const updateTask: Partial<BitrixTask> = {};
+        if (args.title) updateTask.TITLE = args.title;
+        if (args.description) updateTask.DESCRIPTION = args.description;
+        if (args.responsibleId) updateTask.RESPONSIBLE_ID = args.responsibleId.toString();
+        if (args.deadline) updateTask.DEADLINE = args.deadline;
+        if (args.priority) updateTask.PRIORITY = args.priority as any;
+        if (args.status) updateTask.STATUS = args.status;
+        if (args.groupId) updateTask.GROUP_ID = args.groupId;
+        
+        const taskUpdated = await bitrix24Client.updateTask(args.id, updateTask);
+        return { success: true, updated: taskUpdated, message: `Task ${args.id} updated successfully` };
+
+      // Project/Group Management Tools (sonet_group)
+      case 'bitrix24_create_project':
+        const projectId = await bitrix24Client.createProject(args.name, args.description);
+        return { success: true, projectId, message: `Project created with ID: ${projectId}` };
+
+      case 'bitrix24_list_projects':
+        const projects = await bitrix24Client.listProjects();
+        return { success: true, projects };
+
+      case 'bitrix24_get_project':
+        const projectData = await bitrix24Client.getProject(args.id);
+        return { success: true, project: projectData };
 
       case 'bitrix24_search_crm':
         const searchResults = await bitrix24Client.searchCRM(args.query, args.entityTypes);

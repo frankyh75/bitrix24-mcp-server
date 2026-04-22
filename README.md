@@ -1,12 +1,11 @@
 # Bitrix24 MCP Server
 
-A comprehensive Model Context Protocol (MCP) server for Bitrix24 CRM integration, enabling AI agents to seamlessly interact with your Bitrix24 instance through a powerful set of tools.
+A Bitrix24 MCP server fork with a **task-first default** for local use. It still supports the original CRM toolset, but by default exposes only the tools that are most useful for project and task management.
 
 ## 🚀 Features
 
-- **Complete CRM Management**: Create, read, update, and list contacts, deals, and tasks
-- **Advanced Search**: Search across all CRM entities with flexible filtering
-- **Rate Limiting**: Built-in rate limiting to respect Bitrix24 API limits
+- **Task-first mode by default**: exposes task, project, user and connection tools only
+- **Full mode on demand**: switch back to the original broader CRM toolset with one env var
 - **Type Safety**: Full TypeScript implementation with comprehensive type definitions
 - **Error Handling**: Robust error handling and validation
 - **Easy Integration**: Simple setup with Claude Desktop and other MCP-compatible clients
@@ -125,6 +124,7 @@ Create a `.env` file with the following variables:
 BITRIX24_WEBHOOK_URL=https://your-domain.bitrix24.com/rest/USER_ID/WEBHOOK_CODE/
 NODE_ENV=development
 LOG_LEVEL=info
+BITRIX24_MODE=tasks
 ```
 
 ### Bitrix24 Webhook Setup
@@ -149,7 +149,8 @@ Add the following to your Claude Desktop configuration file:
       "command": "node",
       "args": ["/path/to/your/bitrix24-mcp-server/build/index.js"],
       "env": {
-        "BITRIX24_WEBHOOK_URL": "https://your-domain.bitrix24.com/rest/USER_ID/WEBHOOK_CODE/"
+        "BITRIX24_WEBHOOK_URL": "https://your-domain.bitrix24.com/rest/USER_ID/WEBHOOK_CODE/",
+        "BITRIX24_MODE": "tasks"
       }
     }
   }

@@ -86,6 +86,10 @@ export interface BitrixTask {
   STATUS?: '1' | '2' | '3' | '4' | '5'; // 1=New, 2=Pending, 3=In Progress, 4=Completed, 5=Deferred
   STAGE?: string;
   UF_CRM_TASK?: string[]; // CRM entities linked to task
+  GROUP_ID?: number; // Project/Group ID (INTEGER, not string!) - for task-project assignment
+  ACCOMPLICES?: number[]; // Additional responsible users
+  AUDITORS?: number[]; // Users who can view task
+  CREATED_BY?: number; // Task creator user ID
 }
 
 export interface BitrixCompany {
@@ -105,6 +109,19 @@ export interface BitrixCompany {
   MODIFY_BY_ID?: string;
   DATE_CREATE?: string;
   DATE_MODIFY?: string;
+}
+
+// Bitrix24 Project/Group (sonet_group)
+export interface BitrixProject {
+  ID?: number;
+  NAME?: string;
+  DESCRIPTION?: string;
+  ACTIVE?: 'Y' | 'N';
+  VISIBLE?: 'Y' | 'N';
+  OPENED?: 'Y' | 'N';
+  OWNER_ID?: number;
+  DATE_CREATE?: string;
+  DATE_UPDATE?: string;
 }
 
 export class Bitrix24Client {
@@ -572,6 +589,38 @@ export class Bitrix24Client {
   } = {}): Promise<BitrixTask[]> {
     const result = await this.makeRequest('tasks.task.list', params);
     return result.tasks || [];
+  }
+
+  // Project/Group Methods (sonet_group)
+  async createProject(name: string, description?: string): Promise<number> {
+    const result = await this.makeRequest('sonet_group.create', {
+      NAME: name,
+      DESCRIPTION: description || ''
+    });
+    return result;
+  }
+
+  async getProject(groupId: number): Promise<BitrixProject> {
+    const result = await this.makeRequest('sonet_group.get', { GROUP_ID: groupId });
+    return result[groupId] || null;
+  }
+
+  async listProjects(): Promise<BitrixProject[]> {
+    const result = await this.makeRequest('sonet_group.get');
+    return result || [];
+  }
+
+  async updateProject(groupId: number, data: Partial<BitrixProject>): Promise<boolean> {
+    const result = await this.makeRequest('sonet_group.update', { 
+      GROUP_ID: groupId, 
+      ...data 
+    });
+    return result === true;
+  }
+
+  async deleteProject(groupId: number): Promise<boolean> {
+    const result = await this.makeRequest('sonet_group.delete', { GROUP_ID: groupId });
+    return result === true;
   }
 
   // Utility Methods

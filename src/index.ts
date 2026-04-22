@@ -10,9 +10,12 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import { allTools, executeToolCall } from './tools/index.js';
 
+const mode = (process.env.BITRIX24_MODE || 'tasks').toLowerCase();
+const serverName = mode === 'full' ? 'bitrix24-mcp-server' : 'bitrix24-task-mcp-server';
+
 // Initialize the MCP server
 const server = new Server({
-  name: 'bitrix24-mcp-server',
+  name: serverName,
   version: '1.0.0',
   capabilities: {
     tools: {}
